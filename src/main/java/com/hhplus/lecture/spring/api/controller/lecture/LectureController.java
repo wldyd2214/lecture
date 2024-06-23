@@ -3,6 +3,7 @@ package com.hhplus.lecture.spring.api.controller.lecture;
 import com.hhplus.lecture.spring.api.ApiResponse;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
+import com.hhplus.lecture.spring.api.service.LectureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "lectures")
 public class LectureController {
 
+    private final LectureService lectureService;
+
     // 특강 신청 API (핵심)
     // POST /lectures/apply
     @Operation(
@@ -28,7 +31,7 @@ public class LectureController {
     )
     @PostMapping(value = "apply")
     public ApiResponse<LectureResponse> lectureApply(@RequestBody LectureApplyRequest request) {
-        return ApiResponse.ok(null);
+        return ApiResponse.ok(lectureService.lectureApply(request));
     }
 
     // 특강 신청 여부 조회 API

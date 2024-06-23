@@ -1,6 +1,6 @@
 package com.hhplus.lecture.spring.api.controller.lecture.dto.response;
 
-import com.hhplus.lecture.spring.domain.lecture.LectureDTO;
+import com.hhplus.lecture.spring.api.controller.lecture.dto.common.LectureDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Getter;
