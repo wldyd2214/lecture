@@ -1,8 +1,10 @@
 package com.hhplus.lecture.spring.api.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
+import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
 import com.hhplus.lecture.spring.domain.application.Application;
 import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
@@ -31,6 +33,7 @@ class LectureServiceTest {
     @AfterEach
     void tearDown() {
         lectureRepository.deleteAllInBatch();
+        applicationRepository.deleteAllInBatch();
     }
 
     @DisplayName("존재하지 않은 특강 유니크키의 경우 예외가 발생한다.")
@@ -71,21 +74,44 @@ class LectureServiceTest {
             .hasMessage("특강 신청 정원 초과");
     }
 
-    private void createMexCountApplication(Lecture lecture) {
-        for (int i = 0; i < lecture.getMaxCount(); i++) {
-            Application application = createApplication(lecture, i);
-            applicationRepository.save(application);
-        }
-    }
     // 하루에 하나의 수강 신청이 있는 경우 실패
-    // 특강 신청시간이 아닌 경우 실패
+    @DisplayName("이미 수강 신청이 되어있는 경우 예외가 발생한다.")
+    @Test
+    void alreadyLectureApply() {
+        // given
+        long userId = 1;
 
+        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+        lectureRepository.save(lecture);
+        applicationRepository.save(createApplication(lecture, userId));
 
-//    @DisplayName("특강 신청을 성공한다.")
-//    @Test
-//    void lectureApply() {
-//        given()
-//    }
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), userId);
+
+        // when // then
+        assertThatThrownBy(() -> lectureService.lectureApply(request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("이미 신청한 특강 존재");
+    }
+
+    @DisplayName("특강 신청에 성공 후 특강 신청 정보를 반환한다.")
+    @Test
+    void lectureApply() {
+        // given
+        long userId = 1;
+
+        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+        lectureRepository.save(lecture);
+
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), userId);
+
+        LectureResponse lectureResponse = lectureService.lectureApply(request);
+
+        // when // then
+        assertThat(lectureResponse.getLecture()).isNotNull();
+        assertThat(lectureResponse.getLecture())
+            .extracting("title", "desc")
+            .contains(lecture.getTitle(), lecture.getDesc());
+    }
 
     private LectureApplyRequest createLectureApplyRequest(long lectureKey, long userId) {
         return LectureApplyRequest.builder()
@@ -101,6 +127,13 @@ class LectureServiceTest {
                       .startDate(LocalDateTime.of(2024, 4, 30, 13, 0, 0))
                       .maxCount(30)
                       .build();
+    }
+
+    private void createMexCountApplication(Lecture lecture) {
+        for (int i = 0; i < lecture.getMaxCount(); i++) {
+            Application application = createApplication(lecture, i);
+            applicationRepository.save(application);
+        }
     }
 
     private Application createApplication(Lecture lecture, long userId) {
