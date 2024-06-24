@@ -60,15 +60,13 @@ class LectureServiceTest {
     @Test
     void emptyLectureApply() {
         // given
-        long lectureKey = 99999;
-        long userId = 1;
-        LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
-
-        User user = createUser(userId, "박지용");
+        User user = createUser("박지용");
         userRepository.save(user);
 
-        Lecture lecture1 = createLecture(1, "김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
-        lectureRepository.save(lecture1);
+        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+        lectureRepository.save(lecture);
+
+        LectureApplyRequest request = createLectureApplyRequest(999999, user.getKey());
 
         // when // then
         assertThatThrownBy(() -> lectureService.lectureApply(request))
@@ -81,18 +79,16 @@ class LectureServiceTest {
     @Test
     void mexCountExcess() {
         // given
-        long lectureKey = 1;
-        long userId = 9999;
-        LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
+        User user = createUser("박지용");
+        userRepository.save(user);
 
-        User user = createUser(userId, "박지용");
-        userRepository.saveAll(List.of(user));
+        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+        lectureRepository.save(lecture);
 
-        Lecture lecture1 = createLecture(1, "김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
-        lectureRepository.save(lecture1);
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), user.getKey());
 
         // TODO: 요런 경우에는 어떤식으로 테스트를 하면 퍼포먼스가 빨라질지 질문! (Q&A)
-        createMexCountApplication(lecture1);
+        createMexCountApplication(lecture);
 
         // when // then
         assertThatThrownBy(() -> lectureService.lectureApply(request))
@@ -101,11 +97,11 @@ class LectureServiceTest {
     }
 
     private void createMexCountApplication(Lecture lecture) {
-        for (int i = 1; i < lecture.getMaxCount(); i++) {
-            User user = createUser(i, String.format("%d번 테스트 유저", i));
+        for (int i = 0; i < lecture.getMaxCount(); i++) {
+            User user = createUser("테스트 유저");
             userRepository.save(user);
 
-            Application application = createApplication(Long.valueOf(i), lecture, user);
+            Application application = createApplication(lecture, user);
             applicationRepository.save(application);
         }
     }
@@ -126,16 +122,14 @@ class LectureServiceTest {
                                   .build();
     }
 
-    private User createUser(long key, String name) {
+    private User createUser(String name) {
         return User.builder()
-                   .key(key)
                    .name(name)
                    .build();
     }
 
-    private Lecture createLecture(long key, String title, String desc) {
+    private Lecture createLecture(String title, String desc) {
         return Lecture.builder()
-                      .key(key)
                       .title(title)
                       .desc(desc)
                       .startDate(LocalDateTime.of(2024, 4, 30, 13, 0, 0))
@@ -143,9 +137,8 @@ class LectureServiceTest {
                       .build();
     }
 
-    private Application createApplication(long key, Lecture lecture, User user) {
+    private Application createApplication(Lecture lecture, User user) {
         return Application.builder()
-                          .key(key)
                           .lecture(lecture)
                           .user(user)
                           .regDate(LocalDateTime.now())

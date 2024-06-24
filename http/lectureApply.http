@@ -4,5 +4,5 @@ Content-Type: application/json
 
 {
   "lectureKey": 1,
-  "userId": 9999
+  "userId": 1
 }

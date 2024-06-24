@@ -36,8 +36,7 @@ public class Lecture {
     private Integer maxCount;
 
     @Builder
-    public Lecture(Long key, String title, String desc, LocalDateTime startDate, Integer maxCount) {
-        this.key = key;
+    public Lecture(String title, String desc, LocalDateTime startDate, Integer maxCount) {
         this.title = title;
         this.desc = desc;
         this.startDate = startDate;
