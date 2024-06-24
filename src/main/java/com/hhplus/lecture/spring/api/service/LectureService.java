@@ -8,8 +8,6 @@ import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,24 +19,41 @@ public class LectureService {
 
     public LectureResponse lectureApply(LectureApplyRequest request) {
 
-        Optional<Lecture> lecture = lectureRepository.findById(request.getLectureKey());
+        Lecture lecture = lectureRepository.findById(request.getLectureKey())
+                                           .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 특강"));
 
-        if (lecture.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않은 특강");
+        if (applicationRepository.findByUserId(request.getUserId()).isPresent()) {
+            throw new IllegalArgumentException("이미 신청한 특강 존재");
         }
 
-        List<Application> applications = applicationRepository.findAllByLecture(lecture);
+        long currentApplicationCount = applicationRepository.countByLecture(lecture);
 
-        if (lecture.get().getMaxCount() <= applications.size()) {
+        if (lecture.getMaxCount() <= currentApplicationCount) {
             throw new IllegalArgumentException("특강 신청 정원 초과");
         }
 
-        return new LectureResponse(LectureDTO.builder()
-                                             .key(request.getLectureKey())
-                                             .title("허재 코치님의 특강")
-                                             .desc("무신사 29cm 전시 시스템 개발자 허재 코치님의 특강")
-                                             .startDate(
-                                                 LocalDateTime.of(2024, 4, 30, 13, 0, 0))
-                                             .build());
+        applicationRepository.save(createApplication(request.getUserId(), lecture));
+
+        LectureDTO lectureDTO =
+            createLectureDTO(lecture.getKey(), lecture.getTitle(), lecture.getDesc(), lecture.getStartDate());
+
+        return LectureResponse.of(lectureDTO);
+    }
+
+    private Application createApplication(long userId, Lecture lecture) {
+        return Application.builder()
+                          .userId(userId)
+                          .lecture(lecture)
+                          .regDate(LocalDateTime.now())
+                          .build();
+    }
+
+    private LectureDTO createLectureDTO(long key, String title, String desc, LocalDateTime startDate) {
+        return  LectureDTO.builder()
+                          .key(key)
+                          .title(title)
+                          .desc(desc)
+                          .startDate(startDate)
+                          .build();
     }
 }

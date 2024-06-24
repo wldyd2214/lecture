@@ -7,5 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
-    List<Application> findAllByLecture(Optional<Lecture> lecture);
+    Optional<Application> findByUserId(Long userId);
+
+    long countByLecture(Lecture lecture);
 }
