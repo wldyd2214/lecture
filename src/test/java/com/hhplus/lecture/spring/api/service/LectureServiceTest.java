@@ -7,10 +7,7 @@ import com.hhplus.lecture.spring.domain.application.Application;
 import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
-import com.hhplus.lecture.spring.domain.user.User;
-import com.hhplus.lecture.spring.domain.user.UserRepository;
 import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,9 +23,6 @@ class LectureServiceTest {
     private LectureService lectureService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private LectureRepository lectureRepository;
 
     @Autowired
@@ -36,37 +30,20 @@ class LectureServiceTest {
 
     @AfterEach
     void tearDown() {
-        userRepository.deleteAllInBatch();
         lectureRepository.deleteAllInBatch();
     }
 
-    // 존재하지 않은 사용자 유니크키로 특강을 신청하는 경우
-    @DisplayName("존재하지 않은 사용자 유니크키의 경우 예외가 발생한다.")
-    @Test
-    void emptyUserLectureApply() {
-        // given
-        long lectureKey = 1;
-        long userId = 99999;
-        LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
-
-        // when // then
-        assertThatThrownBy(() -> lectureService.lectureApply(request))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("존재하지 않은 사용자");
-    }
-
-    // 존재하지 않은 특강 유니크키로 특강을 신청하는 경우
     @DisplayName("존재하지 않은 특강 유니크키의 경우 예외가 발생한다.")
     @Test
     void emptyLectureApply() {
         // given
-        User user = createUser("박지용");
-        userRepository.save(user);
+        long userId = 1;
+        long lectureKey = 9999;
 
         Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
         lectureRepository.save(lecture);
 
-        LectureApplyRequest request = createLectureApplyRequest(999999, user.getKey());
+        LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
 
         // when // then
         assertThatThrownBy(() -> lectureService.lectureApply(request))
@@ -74,18 +51,16 @@ class LectureServiceTest {
             .hasMessage("존재하지 않은 특강");
     }
 
-    // 특강 신청 인원이 30명이 초과된 경우 실패
     @DisplayName("특강 신청 정원이 초과된 경우 예외가 발생한다.")
     @Test
     void mexCountExcess() {
         // given
-        User user = createUser("박지용");
-        userRepository.save(user);
+        long userId = 9999;
 
         Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
         lectureRepository.save(lecture);
 
-        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), user.getKey());
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), userId);
 
         // TODO: 요런 경우에는 어떤식으로 테스트를 하면 퍼포먼스가 빨라질지 질문! (Q&A)
         createMexCountApplication(lecture);
@@ -98,10 +73,7 @@ class LectureServiceTest {
 
     private void createMexCountApplication(Lecture lecture) {
         for (int i = 0; i < lecture.getMaxCount(); i++) {
-            User user = createUser("테스트 유저");
-            userRepository.save(user);
-
-            Application application = createApplication(lecture, user);
+            Application application = createApplication(lecture, i);
             applicationRepository.save(application);
         }
     }
@@ -122,12 +94,6 @@ class LectureServiceTest {
                                   .build();
     }
 
-    private User createUser(String name) {
-        return User.builder()
-                   .name(name)
-                   .build();
-    }
-
     private Lecture createLecture(String title, String desc) {
         return Lecture.builder()
                       .title(title)
@@ -137,10 +103,10 @@ class LectureServiceTest {
                       .build();
     }
 
-    private Application createApplication(Lecture lecture, User user) {
+    private Application createApplication(Lecture lecture, long userId) {
         return Application.builder()
                           .lecture(lecture)
-                          .user(user)
+                          .userId(userId)
                           .regDate(LocalDateTime.now())
                           .build();
     }

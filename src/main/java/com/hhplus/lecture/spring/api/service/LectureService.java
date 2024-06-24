@@ -7,8 +7,6 @@ import com.hhplus.lecture.spring.domain.application.Application;
 import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
-import com.hhplus.lecture.spring.domain.user.User;
-import com.hhplus.lecture.spring.domain.user.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -18,18 +16,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class LectureService {
-
-    private final UserRepository userRepository;
     private final LectureRepository lectureRepository;
     private final ApplicationRepository applicationRepository;
 
     public LectureResponse lectureApply(LectureApplyRequest request) {
-
-        Optional<User> user = userRepository.findById(request.getUserId());
-
-        if (user.isEmpty()) {
-            throw new IllegalArgumentException("존재하지 않은 사용자");
-        }
 
         Optional<Lecture> lecture = lectureRepository.findById(request.getLectureKey());
 
