@@ -29,17 +29,13 @@ public class Lecture {
     @Column(name = "TL_DESC", nullable = false, length = 300)
     private String desc;
 
-    @Column(name = "TL_START_DATE", nullable = false)
-    private LocalDateTime startDate;
-
-    @Column(name = "TL_MAX_COUNT", nullable = false)
-    private Integer maxCount;
+    @Column(name = "TL_REG_DATE", nullable = false)
+    private LocalDateTime regDate;
 
     @Builder
-    public Lecture(String title, String desc, LocalDateTime startDate, Integer maxCount) {
+    public Lecture(String title, String desc, LocalDateTime regDate) {
         this.title = title;
         this.desc = desc;
-        this.startDate = startDate;
-        this.maxCount = maxCount;
+        this.regDate = regDate;
     }
 }

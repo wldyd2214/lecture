@@ -70,7 +70,6 @@ class LectureControllerTest {
                                         .key(lectureKey)
                                         .title("허재 코치님의 특강")
                                         .desc("무신사 29cm 전시 시스템 개발자 허재 코치님의 특강")
-                                        .startDate(LocalDateTime.of(2024, 4, 30, 13, 0, 0))
                                         .build());
     }
 

@@ -8,6 +8,9 @@ import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
+
+import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
+import com.hhplus.lecture.spring.domain.schedule.LectureScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,45 +18,49 @@ import org.springframework.stereotype.Service;
 @Service
 public class LectureService {
     private final LectureRepository lectureRepository;
+    private final LectureScheduleRepository lectureScheduleRepository;
     private final ApplicationRepository applicationRepository;
 
     public LectureResponse lectureApply(LectureApplyRequest request) {
 
         Lecture lecture = lectureRepository.findById(request.getLectureKey())
-                                           .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 특강"));
+                                           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강"));
 
-        if (applicationRepository.findByUserId(request.getUserId()).isPresent()) {
-            throw new IllegalArgumentException("이미 신청한 특강 존재");
+        LectureSchedule lectureSchedule = lectureScheduleRepository.findById(request.getScheduleKey())
+                                                                   .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강 스케줄"));
+
+        if (applicationRepository.findByUserIdAndLectureSchedule(request.getUserId(), request.getScheduleKey())
+                                 .isPresent()) {
+            throw new IllegalArgumentException("이미 신청한 특강 스케줄");
         }
 
-        long currentApplicationCount = applicationRepository.countByLecture(lecture);
+        long currentApplicationCount = applicationRepository.countByLectureSchedule(lectureSchedule);
 
-        if (lecture.getMaxCount() <= currentApplicationCount) {
-            throw new IllegalArgumentException("특강 신청 정원 초과");
+        if (lectureSchedule.getMaxCount() <= currentApplicationCount) {
+            throw new IllegalArgumentException("해당 특강 스케줄 최대 인원 초과");
         }
 
-        applicationRepository.save(createApplication(request.getUserId(), lecture));
+        applicationRepository.save(createApplication(request.getUserId(), lectureSchedule));
 
         LectureDTO lectureDTO =
-            createLectureDTO(lecture.getKey(), lecture.getTitle(), lecture.getDesc(), lecture.getStartDate());
+            createLectureDTO(lecture.getKey(), lecture.getTitle(), lecture.getDesc());
 
         return LectureResponse.of(lectureDTO);
     }
 
-    private Application createApplication(long userId, Lecture lecture) {
+    private Application createApplication(long userId, LectureSchedule lectureSchedule) {
         return Application.builder()
+                          .lectureSchedule(lectureSchedule)
                           .userId(userId)
-                          .lecture(lecture)
                           .regDate(LocalDateTime.now())
                           .build();
     }
 
-    private LectureDTO createLectureDTO(long key, String title, String desc, LocalDateTime startDate) {
+    private LectureDTO createLectureDTO(long key, String title, String desc) {
         return  LectureDTO.builder()
                           .key(key)
                           .title(title)
                           .desc(desc)
-                          .startDate(startDate)
                           .build();
     }
 }

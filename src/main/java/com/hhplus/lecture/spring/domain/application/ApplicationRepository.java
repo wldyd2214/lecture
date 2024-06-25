@@ -3,11 +3,14 @@ package com.hhplus.lecture.spring.domain.application;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import java.util.List;
 import java.util.Optional;
+
+import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
+    Optional<Object> findByUserIdAndLectureSchedule(Long userId, Long scheduleKey);
 
-    Optional<Application> findByUserId(Long userId);
-
-    long countByLecture(Lecture lecture);
+    long countByLectureSchedule(LectureSchedule lectureSchedule);
 }

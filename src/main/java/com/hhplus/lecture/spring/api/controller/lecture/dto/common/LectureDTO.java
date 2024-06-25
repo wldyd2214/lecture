@@ -18,6 +18,6 @@ public class LectureDTO {
     @Schema(description = "특강 내용")
     private String desc;
 
-    @Schema(description = "특강 시작일")
-    private LocalDateTime startDate;
+    @Schema(description = "특강 스케줄 정보")
+    private LectureScheduleDTO schedule;
 }

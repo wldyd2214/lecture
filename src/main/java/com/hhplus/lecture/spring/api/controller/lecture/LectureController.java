@@ -34,6 +34,16 @@ public class LectureController {
         return ApiResponse.ok(lectureService.lectureApply(request));
     }
 
+    // 특강 목록 API GET /lectures
+    @Operation(
+            summary = "특강 목록 API",
+            description = "특강 목록을 조회 합니다."
+    )
+    @GetMapping(value = "")
+    public ApiResponse<List<LectureResponse>> getLectures() {
+        return ApiResponse.ok(null);
+    }
+
     // 특강 신청 여부 조회 API
     // GET /lectures/application/{userId}
     @Operation(

@@ -124,7 +124,6 @@ class LectureServiceTest {
         return Lecture.builder()
                       .title(title)
                       .desc(desc)
-                      .startDate(LocalDateTime.of(2024, 4, 30, 13, 0, 0))
                       .maxCount(30)
                       .build();
     }
@@ -138,7 +137,6 @@ class LectureServiceTest {
 
     private Application createApplication(Lecture lecture, long userId) {
         return Application.builder()
-                          .lecture(lecture)
                           .userId(userId)
                           .regDate(LocalDateTime.now())
                           .build();
