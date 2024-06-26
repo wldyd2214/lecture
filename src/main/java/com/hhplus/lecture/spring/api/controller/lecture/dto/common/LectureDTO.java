@@ -1,7 +1,8 @@
 package com.hhplus.lecture.spring.api.controller.lecture.dto.common;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,5 +20,5 @@ public class LectureDTO {
     private String desc;
 
     @Schema(description = "특강 스케줄 정보")
-    private LectureScheduleDTO schedule;
+    private List<LectureScheduleDTO> schedules;
 }

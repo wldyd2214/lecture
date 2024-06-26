@@ -1,12 +1,16 @@
 package com.hhplus.lecture.spring.domain.schedule;
 
+import com.hhplus.lecture.spring.domain.application.Application;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -27,9 +31,20 @@ public class LectureSchedule {
     @Column(name = "TLS_DATE", nullable = false)
     private LocalDateTime date;
 
-    @Column(name = "TLS_MEX_COUNT", nullable = false)
+    @Column(name = "TLS_MAX_COUNT", nullable = false)
     private Integer maxCount;
 
     @Column(name = "TLS_REG_DATE", nullable = false)
     private LocalDateTime regDate;
+
+    @OneToMany(mappedBy = "lectureSchedule", cascade = CascadeType.ALL)
+    private List<Application> applications = new ArrayList<>();
+
+    @Builder
+    public LectureSchedule(Lecture lecture, LocalDateTime date, Integer maxCount, LocalDateTime regDate) {
+        this.lecture = lecture;
+        this.date = date;
+        this.maxCount = maxCount;
+        this.regDate = regDate;
+    }
 }

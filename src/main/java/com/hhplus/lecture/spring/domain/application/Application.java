@@ -24,10 +24,10 @@ public class Application {
     @JoinColumn(name = "TLS_KEY", nullable = false, foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private LectureSchedule lectureSchedule;
 
-    @Column(name = "TAH_USER_ID", nullable = false)
+    @Column(name = "TA_USER_ID", nullable = false)
     private Long userId;
 
-    @Column(name = "TAH_REG_DATE", nullable = false)
+    @Column(name = "TA_REG_DATE", nullable = false)
     private LocalDateTime regDate;
 
     @Builder

@@ -1,0 +1,3 @@
+### 특강 신청
+GET localhost:8080/lectures
+Content-Type: application/json
