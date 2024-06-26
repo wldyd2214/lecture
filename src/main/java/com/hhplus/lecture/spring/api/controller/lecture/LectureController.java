@@ -35,7 +35,8 @@ public class LectureController {
         return ApiResponse.ok(lectureService.lectureApply(request));
     }
 
-    // 특강 목록 API GET /lectures
+    // 특강 목록 API
+    // GET /lectures
     @Operation(
             summary = "특강 목록 API",
             description = "특강 목록을 조회 합니다."

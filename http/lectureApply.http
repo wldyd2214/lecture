@@ -4,6 +4,6 @@ Content-Type: application/json
 
 {
   "lectureKey": 1,
-  "scheduleKey": 4,
+  "scheduleKey": 2,
   "userId": 1
 }

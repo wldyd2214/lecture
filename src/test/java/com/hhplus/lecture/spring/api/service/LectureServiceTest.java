@@ -1,13 +1,9 @@
 package com.hhplus.lecture.spring.api.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.when;
-import static org.mockito.BDDMockito.any;
 
 import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
 import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 
@@ -36,8 +32,7 @@ class LectureServiceTest {
     @Mock
     ApplicationRepository applicationRepository;
 
-    //@InjectMocks
-    @Mock
+    @InjectMocks
     LectureService lectureService;
 
     @DisplayName("존재하지 않은 특강 유니크키의 경우 예외가 발생한다.")
@@ -122,12 +117,16 @@ class LectureServiceTest {
         long lectureKey = 1;
         LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
 
-        when(lectureService.lectureApply(any(LectureApplyRequest.class))).thenThrow(new IllegalArgumentException("이미 신청한 특강 존재"));
+        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+        LectureSchedule schedule = createLectureSchedule(lecture);
+        given(lectureRepository.findById(request.getLectureKey())).willReturn(Optional.of(lecture));
+        given(lectureScheduleRepository.findById(request.getScheduleKey())).willReturn(Optional.ofNullable(schedule));
+        given(applicationRepository.findByUserIdAndLectureSchedule(request.getUserId(), schedule)).willReturn(Optional.of(false));
 
         // when // then
         assertThatThrownBy(() -> lectureService.lectureApply(request))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("이미 신청한 특강 존재");
+                .hasMessage("이미 신청한 특강 스케줄");
     }
 
 //    @DisplayName("특강 신청에 성공 후 특강 신청 정보를 반환한다.")
@@ -138,7 +137,11 @@ class LectureServiceTest {
 //        long lectureKey = 1;
 //        LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
 //
-//        when(lectureService.lectureApply(any(LectureApplyRequest.class))).thenThrow(new IllegalArgumentException("이미 신청한 특강 존재"));
+//        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+//        LectureSchedule schedule = createLectureSchedule(lecture);
+//        given(lectureRepository.findById(request.getLectureKey())).willReturn(Optional.of(lecture));
+//        given(lectureScheduleRepository.findById(request.getScheduleKey())).willReturn(Optional.ofNullable(schedule));
+//        given(applicationRepository.findByUserIdAndLectureSchedule(request.getUserId(), schedule)).willReturn(Optional.empty());
 //
 //        LectureResponse response = lectureService.lectureApply(request);
 //

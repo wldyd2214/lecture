@@ -14,12 +14,15 @@ import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
 import com.hhplus.lecture.spring.domain.schedule.LectureScheduleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -28,6 +31,7 @@ public class LectureService {
     private final LectureScheduleRepository lectureScheduleRepository;
     private final ApplicationRepository applicationRepository;
 
+    @Transactional
     public LectureResponse lectureApply(LectureApplyRequest request) {
 
         Lecture lecture = lectureRepository.findById(request.getLectureKey())
@@ -47,12 +51,18 @@ public class LectureService {
             throw new IllegalArgumentException("특강 스케줄 신청 정원 초과");
         }
 
+        //Application application = applicationRepository.findWithPessimisticLockById(1L);
+
+        // 비관적 락 사용한다.
         applicationRepository.save(createApplication(request.getUserId(), lectureSchedule));
 
-        LectureDTO lectureDTO =
-            createLectureDTO(lecture.getKey(), lecture.getTitle(), lecture.getDesc(), List.of(lectureSchedule));
+        LectureDTO result =
+            LectureDTO.createLectureDTO(lecture.getKey(),
+                lecture.getTitle(),
+                lecture.getDesc(),
+                List.of(lectureSchedule));
 
-        return LectureResponse.of(lectureDTO);
+        return LectureResponse.of(result);
     }
 
     private Application createApplication(long userId, LectureSchedule lectureSchedule) {
@@ -63,19 +73,9 @@ public class LectureService {
                           .build();
     }
 
-    private LectureDTO createLectureDTO(long key, String title, String desc, List<LectureSchedule> schedules) {
-        return  LectureDTO.builder()
-                          .key(key)
-                          .title(title)
-                          .desc(desc)
-                          .schedules(schedules.stream()
-                                              .map(LectureScheduleDTO::toDto)
-                                              .collect(Collectors.toList()))
-                          .build();
-    }
-
     public LectureListResponse getLectures() {
-        List<LectureDTO> lectureDTOList = lectureRepository.findAll().stream()
+        List<LectureDTO> lectureDTOList = lectureRepository.findAll()
+                                                           .stream()
                                                            .map(this::createLectureDTO)
                                                            .collect(Collectors.toList());
 
@@ -85,12 +85,10 @@ public class LectureService {
     private LectureDTO createLectureDTO(Lecture lecture) {
         List<LectureSchedule> schedules = lectureScheduleRepository.findByLecture(lecture);
 
-        return createLectureDTO(
-                lecture.getKey(),
-                lecture.getTitle(),
-                lecture.getDesc(),
-                schedules
-        );
+        return LectureDTO.createLectureDTO(lecture.getKey(),
+            lecture.getTitle(),
+            lecture.getDesc(),
+            schedules);
     }
 
     public LectureListResponse getUserApplication(long userId) {
@@ -98,8 +96,8 @@ public class LectureService {
         List<Application> applications = applicationRepository.findByUserId(userId);
 
         List<LectureSchedule> schedules = applications.stream()
-                                                 .map(Application::getLectureSchedule)
-                                                 .collect(Collectors.toList());
+                                                      .map(Application::getLectureSchedule)
+                                                      .collect(Collectors.toList());
 
         List<Lecture> lectures = schedules.stream()
                                           .map(LectureSchedule::getLecture)
@@ -109,10 +107,10 @@ public class LectureService {
 
         for (Lecture lecture : lectures) {
             lectureDTOList.add(
-                    createLectureDTO(lecture.getKey(),
-                                     lecture.getTitle(),
-                                     lecture.getDesc(),
-                                     schedules)
+                LectureDTO.createLectureDTO(lecture.getKey(),
+                    lecture.getTitle(),
+                    lecture.getDesc(),
+                    schedules)
             );
         }
 
