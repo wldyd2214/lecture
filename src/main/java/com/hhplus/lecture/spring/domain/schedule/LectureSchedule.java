@@ -37,6 +37,9 @@ public class LectureSchedule {
     @Column(name = "TLS_REG_DATE", nullable = false)
     private LocalDateTime regDate;
 
+//    @Column(name = "TLS_CURRENT_COUNT", nullable = false)
+//    private Integer currentCount;
+
     @OneToMany(mappedBy = "lectureSchedule", cascade = CascadeType.ALL)
     private List<Application> applications = new ArrayList<>();
 
