@@ -50,10 +50,6 @@ public class LectureSchedule {
         this.regDate = regDate;
     }
 
-    public boolean isPeopleCountExceed() {
-        return this.maxCount <= this.currentCount ? true : false;
-    }
-
     public int currentCountPlus() {
         if (maxCount == currentCount) {
             throw new IllegalArgumentException("특강 스케줄 신청 정원 초과");

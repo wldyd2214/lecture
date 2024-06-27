@@ -7,7 +7,7 @@ import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResp
 import com.hhplus.lecture.spring.api.service.LectureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +31,7 @@ public class LectureController {
         description = "특강 신청을 합니다."
     )
     @PostMapping(value = "apply")
-    public ApiResponse<LectureResponse> lectureApply(@RequestBody LectureApplyRequest request) {
+    public ApiResponse<LectureResponse> lectureApply(@Valid @RequestBody LectureApplyRequest request) {
         return ApiResponse.ok(lectureService.lectureApply(request));
     }
 

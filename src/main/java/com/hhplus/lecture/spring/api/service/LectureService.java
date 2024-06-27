@@ -1,9 +1,6 @@
 package com.hhplus.lecture.spring.api.service;
 
-import com.hhplus.lecture.spring.api.ApiResponse;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.common.ApplicationDTO;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.common.LectureDTO;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.common.LectureScheduleDTO;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureListResponse;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
@@ -14,8 +11,6 @@ import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
@@ -33,46 +28,34 @@ public class LectureService {
 
     @Transactional
     public LectureResponse lectureApply(LectureApplyRequest request) {
+        LectureSchedule schedule = applyLectureSchedule(request);
 
-        Lecture lecture = lectureRepository.findById(request.getLectureKey())
+        Lecture lecture = lectureRepository.findById(schedule.getLecture().getKey())
                                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강"));
 
-        LectureSchedule lectureSchedule = lectureScheduleRepository.findById(request.getScheduleKey())
-                                                                   .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강 스케줄"));
-
-        if (applicationRepository.findByUserIdAndLectureSchedule(request.getUserId(), lectureSchedule)
-                                 .isPresent()) {
-            throw new IllegalArgumentException("이미 신청한 특강 스케줄");
-        }
-
-//        if (lectureSchedule.isPeopleCountExceed()) {
-//            throw new IllegalArgumentException("특강 스케줄 신청 정원 초과");
-//        }
-
-        // 비관적락 사용
-        //applyLectureSchedule(lectureSchedule.getKey(), request.getUserId());
-
-        LectureSchedule schedule = lectureScheduleRepository.findByKeyWithPessimisticLock(lectureSchedule.getKey()).orElseThrow();
-        schedule.currentCountPlus();
-
-        applicationRepository.save(Application.builder()
-                                              .lectureSchedule(lectureSchedule)
-                                              .userId(request.getUserId())
-                                              .regDate(LocalDateTime.now())
-                                              .build());
-
-        // applicationRepository.save(createApplication(request.getUserId(), schedule));
-
-        LectureDTO result =
-            LectureDTO.createLectureDTO(lecture.getKey(),
-                lecture.getTitle(),
-                lecture.getDesc(),
-                List.of(lectureSchedule));
+        LectureDTO result = LectureDTO.createLectureDTO(lecture.getKey(),
+            lecture.getTitle(),
+            lecture.getDesc(),
+            List.of(schedule));
 
         return LectureResponse.of(result);
     }
 
+    public LectureSchedule applyLectureSchedule(LectureApplyRequest request) {
+        LectureSchedule schedule =
+            lectureScheduleRepository.findByKeyWithPessimisticLock(request.getScheduleKey())
+                                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강 스케줄"));
 
+        if (applicationRepository.findByUserIdAndLectureSchedule(request.getUserId(), schedule).isPresent()) {
+            throw new IllegalArgumentException("이미 신청한 특강 스케줄");
+        }
+
+        schedule.currentCountPlus();
+
+        applicationRepository.save(createApplication(request.getUserId(), schedule));
+
+        return schedule;
+    }
 
     private Application createApplication(long userId, LectureSchedule lectureSchedule) {
         return Application.builder()

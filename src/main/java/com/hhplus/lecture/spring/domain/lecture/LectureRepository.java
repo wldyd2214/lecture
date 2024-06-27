@@ -1,8 +1,15 @@
 package com.hhplus.lecture.spring.domain.lecture;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
+import java.util.Optional;
 
-@Repository
-public interface LectureRepository extends JpaRepository<Lecture, Long> {
+public interface LectureRepository {
+
+    Optional<Lecture> findById(Long lectureKey);
+
+    List<Lecture> findAll();
+
+    void deleteAllInBatch();
+
+    void save(Lecture lecture);
 }
