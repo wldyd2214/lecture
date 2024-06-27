@@ -2,28 +2,13 @@ spring:
   profiles:
     default: local
   datasource:
-    url: jdbc:h2:mem:~/lectureApplication
+    url: jdbc:h2:mem:~/lectureApplication # 예시) http://localhost:8080/h2-console/
     driver-class-name: org.h2.Driver
     username: sa
     password:
   jpa:
     hibernate:
       ddl-auto: none
-
-#springdoc:
-#  api-docs:
-#  path: /api-docs
-#  default-consumes-media-type: application/json
-#  default-produces-media-type: application/json
-#  swagger-ui:
-#    operations-sorter: alpha
-#    tags-sorter: alpha
-#    path: /swagger-ui.html
-#    disable-swagger-default-url: true
-#    display-query-params-without-oauth2: true
-#    doc-expansion: none
-#  paths-to-match:
-#    - /api/**
 
 ---
 
@@ -55,7 +40,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true

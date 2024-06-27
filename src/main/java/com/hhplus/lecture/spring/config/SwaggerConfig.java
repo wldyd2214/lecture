@@ -2,9 +2,7 @@ package com.hhplus.lecture.spring.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.models.OpenAPI;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @OpenAPIDefinition(
@@ -15,4 +13,5 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @RequiredArgsConstructor
 public class SwaggerConfig {
+    // 예시) http://localhost:8080/swagger-ui/index.html
 }
