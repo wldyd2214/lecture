@@ -6,6 +6,8 @@ import com.hhplus.lecture.spring.domain.application.Application;
 import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
+import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
+import com.hhplus.lecture.spring.domain.schedule.LectureScheduleRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -29,11 +37,15 @@ class LectureServiceIntegrationTest {
     private LectureRepository lectureRepository;
 
     @Autowired
+    private LectureScheduleRepository lectureScheduleRepository;
+
+    @Autowired
     private ApplicationRepository applicationRepository;
 
     @AfterEach
     void tearDown() {
         lectureRepository.deleteAllInBatch();
+        lectureScheduleRepository.deleteAllInBatch();
         applicationRepository.deleteAllInBatch();
     }
 
@@ -43,11 +55,12 @@ class LectureServiceIntegrationTest {
         // given
         long userId = 1;
         long lectureKey = 9999;
+        long scheduleKey = 1;
 
         Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
         lectureRepository.save(lecture);
 
-        LectureApplyRequest request = createLectureApplyRequest(lectureKey, userId);
+        LectureApplyRequest request = createLectureApplyRequest(lectureKey, scheduleKey, userId);
 
         // when // then
         assertThatThrownBy(() -> lectureService.lectureApply(request))
@@ -60,13 +73,13 @@ class LectureServiceIntegrationTest {
     void mexCountExcess() {
         // given
         long userId = 9999;
+        long scheduleKey = 1;
 
         Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
         lectureRepository.save(lecture);
 
-        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), userId);
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), scheduleKey, userId);
 
-        // TODO: 요런 경우에는 어떤식으로 테스트를 하면 퍼포먼스가 빨라질지 질문! (Q&A)
         // createMexCountApplication(lecture);
 
         // when // then
@@ -81,12 +94,13 @@ class LectureServiceIntegrationTest {
     void alreadyLectureApply() {
         // given
         long userId = 1;
+        long scheduleKey = 1;
 
         Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
         lectureRepository.save(lecture);
-        applicationRepository.save(createApplication(lecture, userId));
+        //applicationRepository.save(createApplication(lecture, userId));
 
-        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), userId);
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), scheduleKey, userId);
 
         // when // then
         assertThatThrownBy(() -> lectureService.lectureApply(request))
@@ -99,11 +113,12 @@ class LectureServiceIntegrationTest {
     void lectureApply() {
         // given
         long userId = 1;
+        long scheduleKey = 1;
 
         Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
         lectureRepository.save(lecture);
 
-        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), userId);
+        LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), scheduleKey, userId);
 
         LectureResponse lectureResponse = lectureService.lectureApply(request);
 
@@ -114,9 +129,107 @@ class LectureServiceIntegrationTest {
             .contains(lecture.getTitle(), lecture.getDesc());
     }
 
-    private LectureApplyRequest createLectureApplyRequest(long lectureKey, long userId) {
+    // TODO: 강의 신청 동시성 테스트 추가
+    @DisplayName("강의 신청 동시성 테스트")
+    @Test
+    void lectureApplyAsync() throws InterruptedException {
+        // given
+        Lecture lecture = createLecture("김종협 코치님의 특강", "SIR.LOIN 테크팀 리드 김종협 코치님의 특강");
+        lectureRepository.save(lecture);
+
+        LectureSchedule schedule = createLectureSchedule(lecture, 30, 29);
+        lectureScheduleRepository.save(schedule);
+
+        createApplicationBulk(schedule);
+
+        long userId1 = 1;
+        long userId2 = 2;
+        long userId3 = 3;
+        long userId4 = 4;
+        long userId5 = 5;
+
+        LectureApplyRequest request1 = createLectureApplyRequest(lecture.getKey(), schedule.getKey(), userId1);
+        LectureApplyRequest request2 = createLectureApplyRequest(lecture.getKey(), schedule.getKey(), userId2);
+        LectureApplyRequest request3 = createLectureApplyRequest(lecture.getKey(), schedule.getKey(), userId3);
+        LectureApplyRequest request4 = createLectureApplyRequest(lecture.getKey(), schedule.getKey(), userId4);
+        LectureApplyRequest request5 = createLectureApplyRequest(lecture.getKey(), schedule.getKey(), userId5);
+
+        // when
+        int count = 50;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(count);
+        for (int i = 0; i < count; i++) {
+            int finalI = i;
+            executorService.execute(() -> {
+                try{
+                    LectureApplyRequest request = createLectureApplyRequest(lecture.getKey(), schedule.getKey(), finalI);
+                    lectureService.lectureApply(request);
+                }catch (Exception e){
+                    e.printStackTrace();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await();
+//        CompletableFuture.allOf(
+//                CompletableFuture.runAsync(() -> {
+//                    lectureService.lectureApply(request1);
+//                }),
+//                CompletableFuture.runAsync(() -> {
+//                    lectureService.lectureApply(request2);
+//                }),
+//                CompletableFuture.runAsync(() -> {
+//                    lectureService.lectureApply(request3);
+//                }),
+//                CompletableFuture.runAsync(() -> {
+//                    lectureService.lectureApply(request4);
+//                }),
+//                CompletableFuture.runAsync(() -> {
+//                    lectureService.lectureApply(request5);
+//                })
+//        ).join();
+
+        LectureSchedule currentCount = lectureScheduleRepository.findById(schedule.getKey()).orElseThrow();
+        long historyCount = applicationRepository.countByLectureSchedule(schedule);
+
+        List<Application> historyList = applicationRepository.findAll();
+
+        historyList.stream().forEach(i -> System.out.println(i.getKey()));
+
+        System.out.println("[현재 신청된 사용자 수] : " + currentCount.getCurrentCount());
+        System.out.println("[현재 신청된 사용자 히스토리 수] : " + historyCount);
+
+        assertThat(currentCount.getCurrentCount()).isEqualTo(30);
+        assertThat(historyCount).isEqualTo(30);
+    }
+
+    private void createApplicationBulk(LectureSchedule schedule) {
+
+        List<Application> applications = new ArrayList<>();
+
+        for (int i = 0; i < 29; i++) {
+            applications.add(createApplication(schedule, 9999 + i));
+        }
+
+        List<Application> saveApplications = applicationRepository.saveAll(applications);
+    }
+
+    private LectureSchedule createLectureSchedule(Lecture lecture, Integer maxCount, Integer currentCount) {
+        return LectureSchedule.builder()
+                              .lecture(lecture)
+                              .date(LocalDateTime.now())
+                              .maxCount(maxCount)
+                              .currentCount(currentCount)
+                              .regDate(LocalDateTime.now())
+                              .build();
+    }
+
+    private LectureApplyRequest createLectureApplyRequest(long lectureKey, long scheduleKey, long userId) {
         return LectureApplyRequest.builder()
                                   .lectureKey(lectureKey)
+                                  .scheduleKey(scheduleKey)
                                   .userId(userId)
                                   .build();
     }
@@ -129,16 +242,10 @@ class LectureServiceIntegrationTest {
                       .build();
     }
 
-//    private void createMexCountApplication(Lecture lecture) {
-//        for (int i = 0; i < lecture.getMaxCount(); i++) {
-//            Application application = createApplication(lecture, i);
-//            applicationRepository.save(application);
-//        }
-//    }
-
-    private Application createApplication(Lecture lecture, long userId) {
+    private Application createApplication(LectureSchedule schedule, long userId) {
         return Application.builder()
                           .userId(userId)
+                          .lectureSchedule(schedule)
                           .regDate(LocalDateTime.now())
                           .build();
     }

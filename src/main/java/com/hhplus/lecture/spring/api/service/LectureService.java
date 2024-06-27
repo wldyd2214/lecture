@@ -45,16 +45,23 @@ public class LectureService {
             throw new IllegalArgumentException("이미 신청한 특강 스케줄");
         }
 
-        long currentApplicationCount = applicationRepository.countByLectureSchedule(lectureSchedule);
+//        if (lectureSchedule.isPeopleCountExceed()) {
+//            throw new IllegalArgumentException("특강 스케줄 신청 정원 초과");
+//        }
 
-        if (lectureSchedule.getMaxCount() <= currentApplicationCount) {
-            throw new IllegalArgumentException("특강 스케줄 신청 정원 초과");
-        }
+        // 비관적락 사용
+        //applyLectureSchedule(lectureSchedule.getKey(), request.getUserId());
 
-        //Application application = applicationRepository.findWithPessimisticLockById(1L);
+        LectureSchedule schedule = lectureScheduleRepository.findByKeyWithPessimisticLock(lectureSchedule.getKey()).orElseThrow();
+        schedule.currentCountPlus();
 
-        // 비관적 락 사용한다.
-        applicationRepository.save(createApplication(request.getUserId(), lectureSchedule));
+        applicationRepository.save(Application.builder()
+                                              .lectureSchedule(lectureSchedule)
+                                              .userId(request.getUserId())
+                                              .regDate(LocalDateTime.now())
+                                              .build());
+
+        // applicationRepository.save(createApplication(request.getUserId(), schedule));
 
         LectureDTO result =
             LectureDTO.createLectureDTO(lecture.getKey(),
@@ -64,6 +71,8 @@ public class LectureService {
 
         return LectureResponse.of(result);
     }
+
+
 
     private Application createApplication(long userId, LectureSchedule lectureSchedule) {
         return Application.builder()

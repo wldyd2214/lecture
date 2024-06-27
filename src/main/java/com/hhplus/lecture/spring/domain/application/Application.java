@@ -4,10 +4,8 @@ import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
