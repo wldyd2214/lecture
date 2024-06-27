@@ -126,7 +126,7 @@ class LectureServiceIntegrationTest {
             .contains(lecture.getTitle(), lecture.getDesc());
     }
 
-    // 동시성에 대한 테스트는 lectureApplyAsync를 통해 테스트하였습니다.
+    // 동시성에 대한 테스트는 lectureApplyAsync에서 테스트하였습니다.
     @DisplayName("강의 신청 동시성 테스트")
     @Test
     void lectureApplyAsync() throws InterruptedException {

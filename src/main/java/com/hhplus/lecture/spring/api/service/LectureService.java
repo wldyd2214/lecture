@@ -26,6 +26,7 @@ public class LectureService {
     private final LectureScheduleRepository lectureScheduleRepository;
     private final ApplicationRepository applicationRepository;
 
+    // 해당 메소드를 통해 강의 신청 로직을 수행합니다.
     @Transactional
     public LectureResponse lectureApply(LectureApplyRequest request) {
         LectureSchedule schedule = applyLectureSchedule(request);
@@ -43,7 +44,7 @@ public class LectureService {
 
     public LectureSchedule applyLectureSchedule(LectureApplyRequest request) {
 
-        // 비관적락을 통한 동시성 처리
+        // 비관적락을 통한 동시성 처리를 사용한 부분입니다.
         LectureSchedule schedule =
             lectureScheduleRepository.findByKeyWithPessimisticLock(request.getScheduleKey())
                                      .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강 스케줄"));
@@ -52,10 +53,10 @@ public class LectureService {
             throw new IllegalArgumentException("이미 신청한 특강 스케줄");
         }
 
-        // 현재 인원수 증가 처리
+        // 현재 신청 완료 인원수 증가 처리
         schedule.currentCountPlus();
 
-        // 신청 완료 사용자의 경우 히스토리 정보 적재
+        // 신청 완료 사용자의 경우에만 히스토리 정보 적재
         applicationRepository.save(createApplication(request.getUserId(), schedule));
 
         return schedule;
