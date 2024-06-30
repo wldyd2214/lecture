@@ -1,9 +1,10 @@
 package com.hhplus.lecture.spring.api.controller.lecture;
 
 import com.hhplus.lecture.spring.api.ApiResponse;
+import com.hhplus.lecture.spring.api.controller.lecture.dto.common.LectureAssembler;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureListResponse;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
+import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureListResponseDTO;
+import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureApplyResponseDTO;
 import com.hhplus.lecture.spring.api.service.LectureService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,8 +32,12 @@ public class LectureController {
         description = "특강 신청을 합니다."
     )
     @PostMapping(value = "apply")
-    public ApiResponse<LectureResponse> lectureApply(@Valid @RequestBody LectureApplyRequest request) {
-        return ApiResponse.ok(lectureService.lectureApply(request));
+    public ApiResponse<LectureApplyResponseDTO> lectureApply(@Valid @RequestBody LectureApplyRequest request) {
+        return ApiResponse.ok(
+            LectureAssembler.toApplyResponseDTO(
+                lectureService.lectureApply(request.getScheduleKey(), request.getUserId())
+            )
+        );
     }
 
     // 특강 목록 API
@@ -42,8 +47,8 @@ public class LectureController {
             description = "특강 목록을 조회 합니다."
     )
     @GetMapping(value = "")
-    public ApiResponse<LectureListResponse> getLectures() {
-        return ApiResponse.ok(lectureService.getLectures());
+    public ApiResponse<LectureListResponseDTO> getLectures() {
+        return ApiResponse.ok(LectureAssembler.toListResponseDTO(lectureService.getLectures()));
     }
 
     // 특강 신청 여부 조회 API
@@ -53,7 +58,9 @@ public class LectureController {
         description = "특강 신청 여부를 조회 합니다."
     )
     @GetMapping(value = "application/{userId}")
-    public ApiResponse<LectureListResponse> getUserApplication(@PathVariable long userId) {
-        return ApiResponse.ok(lectureService.getUserApplication(userId));
+    public ApiResponse<LectureListResponseDTO> getUserApplication(@PathVariable long userId) {
+        return ApiResponse.ok(
+            LectureAssembler.toListResponseDTO(lectureService.getUserApplication(userId))
+        );
     }
 }

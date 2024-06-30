@@ -12,15 +12,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @Builder
-public class LectureResponse {
+public class LectureApplyResponseDTO {
 
     @Schema(description = "특강 정보 DTO")
     private LectureDTO lecture;
 
-    public static LectureResponse of(LectureDTO dto) {
-        return LectureResponse.builder()
-                              .lecture(dto)
-                              .build();
+    public static LectureApplyResponseDTO of(LectureDTO dto) {
+        return LectureApplyResponseDTO.builder()
+                                      .lecture(dto)
+                                      .build();
 
     }
 }

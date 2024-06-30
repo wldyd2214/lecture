@@ -8,7 +8,7 @@ public interface LectureScheduleRepository {
 
     Optional<LectureSchedule> findById(Long scheduleKey);
 
-    Optional<LectureSchedule> findByKeyWithPessimisticLock(Long scheduleKey);
+    Optional<LectureSchedule> findByIdWithPessimisticLock(Long scheduleKey);
 
     List<LectureSchedule> findByLecture(Lecture lecture);
 

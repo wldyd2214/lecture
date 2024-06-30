@@ -20,8 +20,8 @@ public class LectureScheduleImpl implements LectureScheduleRepository {
     }
 
     @Override
-    public Optional<LectureSchedule> findByKeyWithPessimisticLock(Long scheduleKey) {
-        return lectureScheduleJPARepository.findByKeyWithPessimisticLock(scheduleKey);
+    public Optional<LectureSchedule> findByIdWithPessimisticLock(Long scheduleKey) {
+        return lectureScheduleJPARepository.findByIdWithPessimisticLock(scheduleKey);
     }
 
     @Override

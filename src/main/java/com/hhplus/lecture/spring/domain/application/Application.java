@@ -29,7 +29,7 @@ public class Application {
     private LocalDateTime regDate;
 
     @Builder
-    public Application(LectureSchedule lectureSchedule, Long userId, LocalDateTime regDate) {
+    public Application(LectureSchedule lectureSchedule, long userId, LocalDateTime regDate) {
         this.lectureSchedule = lectureSchedule;
         this.userId = userId;
         this.regDate = regDate;

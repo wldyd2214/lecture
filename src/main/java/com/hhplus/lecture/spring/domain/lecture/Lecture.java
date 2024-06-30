@@ -1,12 +1,17 @@
 package com.hhplus.lecture.spring.domain.lecture;
 
+import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +36,9 @@ public class Lecture {
 
     @Column(name = "TL_REG_DATE", nullable = false)
     private LocalDateTime regDate;
+
+    @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL)
+    private List<LectureSchedule> lectureSchedules = new ArrayList<>();
 
     @Builder
     public Lecture(String title, String desc, LocalDateTime regDate) {

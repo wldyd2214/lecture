@@ -10,10 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.common.LectureDTO;
 import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureListResponse;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
+import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureApplyResponseDTO;
 import com.hhplus.lecture.spring.api.service.LectureService;
-import java.time.LocalDateTime;
+import com.hhplus.lecture.spring.domain.lecture.Lecture;
+import com.hhplus.lecture.spring.domain.schedule.LectureSchedule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +38,6 @@ class LectureControllerTest {
     @Test
     void lectureApply() throws Exception {
         // given
-        long lectureKey = 1;
         long scheduleKey = 1;
         long userId = 1;
 
@@ -47,8 +46,11 @@ class LectureControllerTest {
                                                          .userId(userId)
                                                          .build();
 
-        LectureResponse lectureResponse = createLectureResponse(lectureKey);
-        given(lectureService.lectureApply(request)).willReturn(lectureResponse);
+        String title = "허재 코치님의 특강";
+        String desc = "무신사 29cm 전시 시스템 개발자 허재 코치님의 특강";
+
+        given(lectureService.lectureApply(request.getScheduleKey(), request.getUserId()))
+            .willReturn(createLectureSchedule(title, desc));
 
         // when // then
         mockMvc.perform(
@@ -61,44 +63,28 @@ class LectureControllerTest {
                    jsonPath("$.code").value("200"),
                    jsonPath("$.status").value("OK"),
                    jsonPath("$.message").value("OK"),
-                   jsonPath("$.data.lecture.key").value(userId),
-                   jsonPath("$.data.lecture.title").value("허재 코치님의 특강"),
-                   jsonPath("$.data.lecture.desc").value("무신사 29cm 전시 시스템 개발자 허재 코치님의 특강")
+                   jsonPath("$.data.lecture.title").value(title),
+                   jsonPath("$.data.lecture.desc").value(desc)
                 );
     }
 
-    @DisplayName("특강 신청시 강의 유니크키가 음수인 경우 예외 처리를 확인한다.")
-    @Test
-    void lectureApplyPositiveLectureKey() throws Exception {
-        // given
-        long lectureKey = -1;
-        long scheduleKey = 1;
-        long userId = 1;
+    private Lecture createLecture(String title, String desc) {
+        return Lecture.builder()
+                      .title(title)
+                      .desc(desc)
+                      .build();
+    }
 
-        LectureApplyRequest request = LectureApplyRequest.builder()
-                                                         .scheduleKey(scheduleKey)
-                                                         .userId(userId)
-                                                         .build();
-
-        // when // then
-        mockMvc.perform(
-                   post("/lectures/apply")
-                       .content(objectMapper.writeValueAsString(request))
-                       .contentType(MediaType.APPLICATION_JSON))
-               .andDo(print())
-               .andExpectAll(
-                   status().isBadRequest(),
-                   jsonPath("$.code").value("400"),
-                   jsonPath("$.status").value("BAD_REQUEST"),
-                   jsonPath("$.message").value("특강 유니크키는 양수값만 입력할 수 있습니다.")
-               );
+    private LectureSchedule createLectureSchedule(String title, String desc) {
+        return LectureSchedule.builder()
+                              .lecture(createLecture(title, desc))
+                              .build();
     }
 
     @DisplayName("특강 신청시 강의 스케줄 유니크키가 음수인 경우 예외 처리를 확인한다.")
     @Test
     void lectureApplyPositiveScheduleKey() throws Exception {
         // given
-        long lectureKey = 1;
         long scheduleKey = -1;
         long userId = 1;
 
@@ -125,7 +111,6 @@ class LectureControllerTest {
     @Test
     void lectureApplyPositiveUserIdKey() throws Exception {
         // given
-        long lectureKey = 1;
         long scheduleKey = 1;
         long userId = -1;
 
@@ -160,8 +145,7 @@ class LectureControllerTest {
                    status().isOk(),
                    jsonPath("$.code").value("200"),
                    jsonPath("$.status").value("OK"),
-                   jsonPath("$.message").value("OK"),
-                   jsonPath("$.data").isEmpty()
+                   jsonPath("$.message").value("OK")
                );
     }
 
@@ -179,16 +163,7 @@ class LectureControllerTest {
                    status().isOk(),
                    jsonPath("$.code").value("200"),
                    jsonPath("$.status").value("OK"),
-                   jsonPath("$.message").value("OK"),
-                   jsonPath("$.data").isEmpty()
+                   jsonPath("$.message").value("OK")
                );
-    }
-
-    private LectureResponse createLectureResponse(long lectureKey) {
-        return new LectureResponse(LectureDTO.builder()
-                                        .key(lectureKey)
-                                        .title("허재 코치님의 특강")
-                                        .desc("무신사 29cm 전시 시스템 개발자 허재 코치님의 특강")
-                                        .build());
     }
 }

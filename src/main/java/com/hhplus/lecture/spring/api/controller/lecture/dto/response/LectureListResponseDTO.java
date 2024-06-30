@@ -14,14 +14,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @Builder
-public class LectureListResponse {
+public class LectureListResponseDTO {
 
     @Schema(description = "특강 목록 정보 DTO")
     private List<LectureDTO> lectures;
 
-    public static LectureListResponse of(List<LectureDTO> lectureDTOList) {
-        return LectureListResponse.builder()
-                                  .lectures(lectureDTOList)
-                                  .build();
+    public static LectureListResponseDTO of(List<LectureDTO> lectureDTOList) {
+        return LectureListResponseDTO.builder()
+                                     .lectures(lectureDTOList)
+                                     .build();
     }
 }

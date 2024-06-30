@@ -11,8 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 public interface LectureScheduleJPARepository extends JpaRepository<LectureSchedule, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select l from LectureSchedule l where l.key = :scheduleKey")
-    Optional<LectureSchedule> findByKeyWithPessimisticLock(long scheduleKey);
+    @Query("select ls from LectureSchedule ls where ls.key = :key")
+    Optional<LectureSchedule> findByIdWithPessimisticLock(long key);
 
     List<LectureSchedule> findByLecture(Lecture lecture);
 }

@@ -1,15 +1,10 @@
 package com.hhplus.lecture.spring.api.service;
 
-import com.hhplus.lecture.spring.api.controller.lecture.dto.common.LectureDTO;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.request.LectureApplyRequest;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureListResponse;
-import com.hhplus.lecture.spring.api.controller.lecture.dto.response.LectureResponse;
 import com.hhplus.lecture.spring.domain.application.Application;
 import com.hhplus.lecture.spring.domain.application.ApplicationRepository;
 import com.hhplus.lecture.spring.domain.lecture.Lecture;
 import com.hhplus.lecture.spring.domain.lecture.LectureRepository;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,85 +22,52 @@ public class LectureService {
     private final ApplicationRepository applicationRepository;
 
     @Transactional
-    public LectureResponse lectureApply(LectureApplyRequest request) {
-        LectureSchedule schedule = applyLectureSchedule(request);
+    public LectureSchedule lectureApply(long scheduleKey, long userId) {
 
-        Lecture lecture = lectureRepository.findById(schedule.getLecture().getKey())
-                                           .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강"));
-
-        LectureDTO result = LectureDTO.createLectureDTO(lecture.getKey(),
-            lecture.getTitle(),
-            lecture.getDesc(),
-            List.of(schedule));
-
-        return LectureResponse.of(result);
-    }
-
-    public LectureSchedule applyLectureSchedule(LectureApplyRequest request) {
         LectureSchedule schedule =
-            lectureScheduleRepository.findByKeyWithPessimisticLock(request.getScheduleKey())
+            lectureScheduleRepository.findByIdWithPessimisticLock(scheduleKey)
                                      .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 특강 스케줄"));
 
-        if (applicationRepository.findByUserIdAndLectureSchedule(request.getUserId(), schedule).isPresent()) {
+        if (applicationRepository.findByUserIdAndLectureSchedule(userId, schedule).isPresent()) {
             throw new IllegalArgumentException("이미 신청한 특강 스케줄");
         }
 
         schedule.currentCountPlus();
 
-        applicationRepository.save(createApplication(request.getUserId(), schedule));
+        ApplicationHistorySave(schedule, userId);
 
         return schedule;
     }
 
-    private Application createApplication(long userId, LectureSchedule lectureSchedule) {
-        return Application.builder()
-                          .lectureSchedule(lectureSchedule)
-                          .userId(userId)
-                          .regDate(LocalDateTime.now())
-                          .build();
+    private Application ApplicationHistorySave(LectureSchedule schedule, long userId) {
+        Application application =
+            Application.builder().lectureSchedule(schedule)
+                       .userId(userId)
+                       .regDate(LocalDateTime.now())
+                       .build();
+
+        return applicationRepository.save(application);
     }
 
-    public LectureListResponse getLectures() {
-        List<LectureDTO> lectureDTOList = lectureRepository.findAll()
-                                                           .stream()
-                                                           .map(this::createLectureDTO)
-                                                           .collect(Collectors.toList());
-
-        return LectureListResponse.of(lectureDTOList);
+    public List<Lecture> getLectures() {
+        return lectureRepository.findAll();
     }
 
-    private LectureDTO createLectureDTO(Lecture lecture) {
-        List<LectureSchedule> schedules = lectureScheduleRepository.findByLecture(lecture);
+    public List<Lecture> getUserApplication(long userId) {
 
-        return LectureDTO.createLectureDTO(lecture.getKey(),
-            lecture.getTitle(),
-            lecture.getDesc(),
-            schedules);
-    }
+        List<Application> applications =
+            applicationRepository.findByUserId(userId);
 
-    public LectureListResponse getUserApplication(long userId) {
+        List<LectureSchedule> schedules =
+            applications.stream()
+                        .map(Application::getLectureSchedule)
+                        .collect(Collectors.toList());
 
-        List<Application> applications = applicationRepository.findByUserId(userId);
+        List<Lecture> lectures =
+            schedules.stream()
+                     .map(LectureSchedule::getLecture)
+                     .collect(Collectors.toList());
 
-        List<LectureSchedule> schedules = applications.stream()
-                                                      .map(Application::getLectureSchedule)
-                                                      .collect(Collectors.toList());
-
-        List<Lecture> lectures = schedules.stream()
-                                          .map(LectureSchedule::getLecture)
-                                          .collect(Collectors.toList());
-
-        List<LectureDTO> lectureDTOList = new ArrayList<>();
-
-        for (Lecture lecture : lectures) {
-            lectureDTOList.add(
-                LectureDTO.createLectureDTO(lecture.getKey(),
-                    lecture.getTitle(),
-                    lecture.getDesc(),
-                    schedules)
-            );
-        }
-
-        return LectureListResponse.of(lectureDTOList);
+        return lectures;
     }
 }
